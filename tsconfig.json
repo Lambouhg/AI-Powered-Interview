@@ -1,0 +1,27 @@
+{
+  "compilerOptions": {
+    "target": "ES2017",
+    "lib": ["dom", "dom.iterable", "esnext"],
+    "allowJs": true,
+    "skipLibCheck": true,
+    "strict": true,
+    "noEmit": true,
+    "esModuleInterop": true,
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "jsx": "preserve",
+    "incremental": true,
+    "plugins": [
+      {
+        "name": "next"
+      }
+    ],
+    "paths": {
+      "@/*": ["./src/*"]
+    }
+  },
+  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts", "src/pages/MessageCenter.jsx", "src/components/MessageContent.js", "src/components/Sidebar.jsx", "src/components/MessageListItem.jsx", "src/components/MessageList.jsx", "src/components/MessageInput.jsx", "src/components/MessageHeader.jsx", "src/components/MessageDetail.js", "src/components/SidebarSettingsSection.jsx", "src/components/SidebarLink.jsx", "next.config.ts"],
+  "exclude": ["node_modules"]
+}
