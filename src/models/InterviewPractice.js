@@ -9,8 +9,7 @@ const evaluationSchema = new mongoose.Schema({
     feedback: String,
     suggestions: [String],
     strongPoints: [String],
-    missedConcepts: [String],
-    overallEvaluation: String
+    missedConcepts: [String]
 }, { _id: false });
 
 const questionSchema = new mongoose.Schema({
@@ -35,22 +34,6 @@ const questionSchema = new mongoose.Schema({
         type: String,
         trim: true
     }],
-    expectedDuration: {
-        type: Number
-    },
-    followUpQuestions: [{
-        type: String,
-        trim: true
-    }],
-    skillsTested: [{
-        type: String,
-        trim: true
-    }],
-    score: {
-        type: Number,
-        min: 0,
-        max: 10
-    },
     status: {
         type: String,
         enum: ['pending', 'answered', 'reviewed'],
@@ -68,12 +51,8 @@ const interviewPracticeSchema = new mongoose.Schema({
         type: String,
         required: true,
         default: function() {
-            return `${this.role} ${this.level} ${this.category} Interview`;
+            return `${this.role} ${this.level} Interview`;
         }
-    },
-    field: {
-        type: String,
-        required: true
     },
     role: {
         type: String,
@@ -84,14 +63,6 @@ const interviewPracticeSchema = new mongoose.Schema({
         required: true
     },
     category: {
-        type: String,
-        required: true
-    },
-    difficulty: {
-        type: String,
-        required: true
-    },
-    topic: {
         type: String,
         required: true
     },
@@ -115,21 +86,9 @@ const interviewPracticeSchema = new mongoose.Schema({
         type: Number,
         default: 0
     },
-    duration: {
-        type: Number,
-        default: 0
-    },
-    tags: [{
-        type: String,
-        trim: true
-    }],
     notes: {
         type: String,
         trim: true
-    },
-    isPublic: {
-        type: Boolean,
-        default: false
     }
 }, {
     timestamps: true

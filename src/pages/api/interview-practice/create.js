@@ -3,11 +3,9 @@ import connectDB from "../../../lib/mongodb";
 import InterviewPractice from "../../../models/InterviewPractice";
 import { generateQuestions } from "../../../utils/interview/geminiUtils";
 
-const validFields = ["Information Technology"];
 const validRoles = ["Software Developer", "QA Engineer", "Business Analyst", "Project Manager"];
 const validLevels = ["Intern", "Junior", "Senior", "Lead", "Manager"];
 const validCategories = ["Technical", "Behavioral", "System Design", "Problem Solving"];
-const validDifficulties = ["Easy", "Medium", "Hard"];
 
 export default async function handler(req, res) {
   if (req.method !== "POST") {
@@ -16,16 +14,13 @@ export default async function handler(req, res) {
 
   try {
     await connectDB();
-    const { userId, field, role, level, category, difficulty } = req.body;
+    const { userId, role, level, category } = req.body;
 
-    if (!userId || !field || !role || !level || !category || !difficulty) {
+    if (!userId || !role || !level || !category) {
       return res.status(400).json({ message: "Missing required fields" });
     }
 
     // Validate field values
-    if (!validFields.includes(field)) {
-      return res.status(400).json({ message: "Invalid field" });
-    }
     if (!validRoles.includes(role)) {
       return res.status(400).json({ message: "Invalid role" });
     }
@@ -34,9 +29,6 @@ export default async function handler(req, res) {
     }
     if (!validCategories.includes(category)) {
       return res.status(400).json({ message: "Invalid category" });
-    }
-    if (!validDifficulties.includes(difficulty)) {
-      return res.status(400).json({ message: "Invalid difficulty" });
     }
 
     if (!process.env.GOOGLE_API_KEY) {
@@ -49,7 +41,7 @@ export default async function handler(req, res) {
     // Generate questions using Gemini
     let generatedQuestions;
     try {
-      generatedQuestions = await generateQuestions(field, role, level, category, difficulty);
+      generatedQuestions = await generateQuestions(role, level, category);
     } catch (error) {
       console.error("Error generating questions:", error);
       return res.status(500).json({ 
@@ -61,22 +53,15 @@ export default async function handler(req, res) {
     // Create new session
     const session = new InterviewPractice({
       user: userId,
-      field,
       role,
       level,
       category,
-      difficulty,
-      title: `${role} ${level} ${category} Interview`,
-      topic: `${role} ${level} ${category}`,
       questions: generatedQuestions.questions.map(q => ({
         question: q.question,
         answer: "",
         evaluation: null,
         idealAnswer: q.idealAnswer,
         keyPoints: q.keyPoints || [],
-        expectedDuration: q.expectedDuration || 0,
-        followUpQuestions: q.followUpQuestions || [],
-        skillsTested: q.skillsTested || [],
         status: 'pending'
       })),
       status: "in_progress",
