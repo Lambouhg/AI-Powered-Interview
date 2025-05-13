@@ -14,6 +14,7 @@ const UserSchema = new mongoose.Schema({
   aboutMe: { type: String, default: "none" },
   phone: { type: String, default: "none" },
   video: { type: String, default: "none" }, // Đường dẫn đến video giới thiệu
+  cvUrl: { type: String, default: "none" },
   socialLinks: {
     // Các liên kết mạng xã hội
     instagram: { type: String, default: null },

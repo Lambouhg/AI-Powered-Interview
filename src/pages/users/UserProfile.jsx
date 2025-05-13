@@ -14,6 +14,8 @@ import axios from "axios";
 import { Loader } from "lucide-react"; // Sử dụng lucide-react để hiển thị loading icon
 import img1 from "../../assets/b79144e03dc4996ce319ff59118caf65.jpg";
 import ShortVideoSection from "../../components/profile/ShortVideoSection";
+import UploadCVSection from "../../components/profile/UploadCVSection";
+
 const UserProfile = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -40,6 +42,7 @@ const UserProfile = () => {
   const [video, setVideo] = useState("");
   const [newLanguage, setNewLanguage] = useState("");
   const [isOpen, setIsOpen] = useState(false);
+  const [cvUrl, setCvUrl] = useState("");
   useEffect(() => {
     const fetchUserData = async () => {
       try {
@@ -87,6 +90,7 @@ const UserProfile = () => {
         );
         setSkills(Array.isArray(userData.skills) ? userData.skills : []);
         setVideo(typeof userData.video === "string" ? userData.video : "");
+        setCvUrl(userData.cvUrl || "");
       } catch (err) {
         setError("Không thể tải dữ liệu người dùng.");
       } finally {
@@ -243,13 +247,10 @@ const UserProfile = () => {
               />
             </div>
             <div className="bg-white rounded-lg shadow p-6">
-              <h2 className="text-lg font-semibold mb-4">Short Introduce</h2>
-              <ShortVideoSection
-                isEditing={isEditing}
-                video={video}
-                setVideo={setVideo}
-              />
+            <h2 className="text-lg font-semibold mb-4">Upload CV</h2>
+            <UploadCVSection initialUrl={cvUrl} />
             </div>
+
           </div>
         </div>
       </div>
