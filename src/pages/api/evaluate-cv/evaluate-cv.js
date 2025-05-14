@@ -7,7 +7,7 @@ import { PdfConverter } from "pdf-poppler";
 import Tesseract from "tesseract.js";
 
 const genAI = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY);
-const model = genAI.getGenerativeModel({ model: "gemini-2.0-pro" });
+const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
 
 // Chuyển PDF thành ảnh PNG
 async function convertPdfToImages(pdfBuffer, outputDir) {

@@ -3,7 +3,6 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 const genAI = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY);
 const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
 
-
 function transformKeys(raw) {
   return {
     ...raw,
@@ -11,7 +10,6 @@ function transformKeys(raw) {
   };
 }
 
-// ✅ Lọc chỉ những field còn thiếu để gửi qua AI
 function extractMissingFields(profile) {
   const fields = [
     "phone", "address", "jobTitle", "aboutMe", "shortIntro",
@@ -28,7 +26,7 @@ function extractMissingFields(profile) {
       (Array.isArray(val) && val.length === 0);
 
     if (isEmpty) {
-      missing[key] = null; // chỉ gửi các field rỗng
+      missing[key] = null;
     }
   });
 
@@ -60,16 +58,21 @@ NO markdown, no explanation, only raw JSON.
 `;
 
   try {
-    const result = await model.generateContent(prompt);
-    const text = result.response.text();
+    const result = await model.generateContentStream({
+      contents: [{ role: "user", parts: [{ text: prompt }] }],
+    });
 
-    const match = text.match(/```(?:json)?([\s\S]*?)```/);
-    const jsonText = match ? match[1].trim() : text.trim();
+    let fullText = "";
+    for await (const chunk of result.stream) {
+      fullText += chunk.text();
+    }
 
-    const suggestions = JSON.parse(jsonText);
-    return suggestions;
+    const match = fullText.match(/```(?:json)?([\s\S]*?)```/);
+    const jsonText = match ? match[1].trim() : fullText.trim();
+
+    return JSON.parse(jsonText);
   } catch (error) {
-    console.error("Failed to generate missing fields:", error);
+    console.error("❌ Failed to generate missing fields:", error);
     throw new Error("AI failed to suggest missing CV fields");
   }
 };
@@ -115,14 +118,19 @@ Hãy trả về một JSON object như sau, KHÔNG markdown/code block, KHÔNG g
 `;
 
   try {
-    const result = await model.generateContent(prompt);
-    const text = result.response.text();
+    const result = await model.generateContentStream({
+      contents: [{ role: "user", parts: [{ text: prompt }] }],
+    });
 
-    const match = text.match(/```(?:json)?([\s\S]*?)```/);
-    const jsonText = match ? match[1].trim() : text.trim();
+    let fullText = "";
+    for await (const chunk of result.stream) {
+      fullText += chunk.text();
+    }
 
-    const parsed = JSON.parse(jsonText);
-    return parsed;
+    const match = fullText.match(/```(?:json)?([\s\S]*?)```/);
+    const jsonText = match ? match[1].trim() : fullText.trim();
+
+    return JSON.parse(jsonText);
   } catch (err) {
     console.error("❌ Lỗi chấm điểm CV:", err);
     return {
