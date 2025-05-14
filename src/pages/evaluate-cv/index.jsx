@@ -1,60 +1,90 @@
-"use client";
+import React, { useState } from "react";
+import { toast } from "react-hot-toast";
 
-import { useState, useEffect } from "react";
-import { useRouter } from "next/router";
-import MainEvaluateCV from "../../components/EvaluateCV/MainEvaluateCV";
+const EvaluateCV = ({ uploadedUrl }) => {
+  const [loading, setLoading] = useState(false); // Trạng thái tải dữ liệu
+  const [result, setResult] = useState(null); // Kết quả chấm điểm từ API
+  const [error, setError] = useState(null); // Lỗi nếu có
 
-export default function EvaluateCVPage() {
-  const router = useRouter();
-  const [cvUrl, setCvUrl] = useState("");
-  const [result, setResult] = useState(null);
-  const [loading, setLoading] = useState(false);
-
-  // Khi router sẵn sàng → lấy query
-  useEffect(() => {
-    if (router.isReady) {
-      const { cvUrl } = router.query;
-      if (cvUrl) {
-        setCvUrl(cvUrl);
-      }
+  // Hàm gọi API chấm điểm CV
+  const evaluateCV = async () => {
+    if (!uploadedUrl) {
+      toast.error("Chưa có CV để chấm điểm.");
+      return;
     }
-  }, [router]);
 
-  // Gọi API khi cvUrl đã có
-  useEffect(() => {
-    if (cvUrl) {
-      handleEvaluate(cvUrl);
-    }
-  }, [cvUrl]);
+    setLoading(true); // Đang tải
+    setError(null); // Reset lỗi
+    setResult(null); // Reset kết quả trước khi gọi API
 
-  const handleEvaluate = async (url) => {
-    setLoading(true);
-    setResult(null);
     try {
-      const res = await fetch("/api/evaluate-cv/evaluate-cv", {
+      const response = await fetch("/api/evaluate-cv", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ cvUrl: url }),
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ cvUrl: uploadedUrl }),  // Gửi URL của CV đã tải lên Supabase
       });
-      const data = await res.json();
+
+      const data = await response.json();
+
       if (data.success) {
-        setResult(data);
+        setResult(data); // Lưu kết quả vào state
+        toast.success("Chấm điểm CV thành công!");
       } else {
-        alert("Lỗi AI: " + data.error);
+        throw new Error(data.error || "Lỗi không xác định");
       }
     } catch (err) {
-      console.error(err);
-      alert("Lỗi khi gọi API");
+      setError(err.message); // Set lỗi nếu có
+      toast.error(`Lỗi: ${err.message}`);
     } finally {
-      setLoading(false);
+      setLoading(false); // Dừng trạng thái tải
     }
   };
 
   return (
-    <MainEvaluateCV
-      loading={loading}
-      result={result}
-      cvUrl={cvUrl}
-    />
+    <div className="evaluate-cv-container p-6 bg-white rounded-lg shadow-md">
+      <h2 className="text-2xl font-bold mb-4">Chấm điểm CV bằng AI</h2>
+
+      <button
+        onClick={evaluateCV}
+        disabled={loading}
+        className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-all duration-300"
+      >
+        {loading ? "Đang chấm điểm..." : "Chấm điểm CV"}
+      </button>
+
+      {result && (
+        <div className="mt-6">
+          <h3 className="text-xl font-semibold">Kết quả chấm điểm:</h3>
+          <p><strong>Điểm: </strong>{result.score}</p>
+          <p><strong>Phản hồi: </strong>{result.feedback}</p>
+          <div>
+            <strong>Gợi ý cải thiện:</strong>
+            <ul className="list-disc pl-5">
+              {result.suggestions.map((suggestion, index) => (
+                <li key={index}>{suggestion}</li>
+              ))}
+            </ul>
+          </div>
+          <div>
+            <strong>Điểm mạnh:</strong>
+            <ul className="list-disc pl-5">
+              {result.highlights.map((highlight, index) => (
+                <li key={index}>{highlight}</li>
+              ))}
+            </ul>
+          </div>
+        </div>
+      )}
+
+      {error && (
+        <div className="mt-4 text-red-500">
+          <p>Lỗi: {error}</p>
+        </div>
+      )}
+    </div>
   );
-}
+};
+
+export default EvaluateCV;

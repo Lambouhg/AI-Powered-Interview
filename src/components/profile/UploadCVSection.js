@@ -25,7 +25,7 @@ export default function UploadCVSection({ initialUrl = "" }) {
     if (!file || !clerkId) return;
 
     if (file.type !== "application/pdf") {
-      toast.error("Only PDF files are allowed!");
+      toast.error("Chỉ cho phép file PDF!");
       return;
     }
 
@@ -53,57 +53,47 @@ export default function UploadCVSection({ initialUrl = "" }) {
         const data = JSON.parse(xhr.responseText);
         if (data.success) {
           setUploadedUrl(data.url);
-          toast.success("Upload successful!");
+          toast.success("Upload thành công!");
         } else {
-          toast.error("Upload failed: " + data.error);
+          toast.error("Upload thất bại: " + data.error);
         }
       } else {
-        toast.error("Server error during upload.");
+        toast.error("Lỗi server khi upload.");
       }
     };
 
     xhr.onerror = () => {
       setUploading(false);
-      toast.error("Network or server error.");
+      toast.error("Lỗi mạng hoặc server không phản hồi.");
     };
 
     xhr.send(formData);
   };
 
   const handleEvaluate = () => {
+    // Khi bấm vào nút "Chấm điểm CV", chuyển tới trang đánh giá
     window.location.href = `/evaluate-cv?cvUrl=${encodeURIComponent(uploadedUrl)}`;
   };
 
   return (
     <div className="space-y-6 mt-6">
-      {/* Dropzone */}
-      <div
-        className="w-full cursor-pointer border-2 border-dashed border-gray-300 rounded-lg p-8 flex flex-col items-center justify-center hover:bg-blue-50 transition duration-300 ease-in-out transform hover:scale-105"
-        style={{ backgroundColor: "#f0f4f8" }}
-        onClick={() => document.getElementById("cv-input").click()}
-      >
-        <p className="text-gray-700 text-sm font-medium mb-4">
-          {fileName ? `File: ${fileName}` : "Drag & Drop CV or Choose a File"}
+      <label className="w-full cursor-pointer border-2 border-dashed border-gray-300 rounded-lg p-6 flex flex-col items-center justify-center hover:bg-gray-100 transition">
+        <p className="text-gray-700 text-sm font-medium">
+          {uploadedUrl ? "📝 Thay CV khác" : "Tải CV (PDF)"}
         </p>
         <input
-          id="cv-input"
           type="file"
           accept="application/pdf"
           onChange={handleFileUpload}
           disabled={uploading}
           className="hidden"
         />
-        <p className="text-gray-500 text-xs mt-2">
-          Only PDF files are allowed, max size 10MB
-        </p>
-      </div>
+      </label>
 
-      {/* Display file name */}
-      {fileName && <p className="text-gray-600 text-sm mt-2">📂 {fileName}</p>}
+      {fileName && <p className="text-gray-600 text-sm">📂 {fileName}</p>}
 
-      {/* Progress bar */}
       {uploading && (
-        <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden mt-4">
+        <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
           <div
             className="bg-blue-500 h-full transition-all duration-300 ease-in-out"
             style={{ width: `${progress}%` }}
@@ -111,24 +101,23 @@ export default function UploadCVSection({ initialUrl = "" }) {
         </div>
       )}
 
-      {/* Action Buttons */}
       {uploadedUrl && (
         <>
           <div className="flex space-x-4 mt-6">
-            {/* Button "View uploaded CV" */}
+            {/* Nút "Xem CV đã tải lên" */}
             <button
               onClick={() => window.open(uploadedUrl, "_blank")}
               className="bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium py-2 px-6 rounded-lg shadow-md transition transform hover:scale-105"
             >
-              View Uploaded CV
+              Xem CV đã tải lên
             </button>
 
-            {/* Button "Evaluate CV using AI" */}
+            {/* Nút "Chấm điểm CV bằng AI" */}
             <button
               onClick={handleEvaluate}
               className="bg-green-600 hover:bg-green-700 text-white text-sm font-medium py-2 px-6 rounded-lg shadow-md transition transform hover:scale-105"
             >
-              Evaluate CV with AI
+              Chấm điểm CV bằng AI
             </button>
           </div>
         </>
