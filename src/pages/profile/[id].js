@@ -11,7 +11,6 @@ import SkillsSection from "../../components/profile/SkillsSection";
 import AdditionalDetailsSection from "../../components/profile/AdditionalDetailsSection";
 import SocialLinksSection from "../../components/profile/SocialLinksSection";
 import ShortVideoSection from "../../components/profile/ShortVideoSection";
-
 import { useRouter } from "next/router";
 import axios from "axios";
 import { Loader } from "lucide-react";
