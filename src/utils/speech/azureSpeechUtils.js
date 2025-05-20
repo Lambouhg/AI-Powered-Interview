@@ -164,4 +164,66 @@ export const speechToText = async (language = 'en-US') => {
       reject(error);
     }
   });
-}; 
+};
+
+// Function to convert text to speech
+export const textToSpeech = async (text, language = 'vi-VN', voiceName = 'vi-VN-HoaiMyNeural') => {
+  return new Promise((resolve, reject) => {
+    try {
+      // Create speech synthesizer
+      const sessionConfig = sdk.SpeechConfig.fromSubscription(
+        process.env.NEXT_PUBLIC_AZURE_SPEECH_KEY,
+        process.env.NEXT_PUBLIC_AZURE_SPEECH_REGION
+      );
+      
+      // Set speech synthesis output format and voice
+      sessionConfig.speechSynthesisLanguage = language;
+      sessionConfig.speechSynthesisVoiceName = voiceName;
+      
+      // Create audio output for default speakers
+      const audioConfig = sdk.AudioConfig.fromDefaultSpeakerOutput();
+      
+      // Create synthesizer with provided config
+      const synthesizer = new sdk.SpeechSynthesizer(sessionConfig, audioConfig);
+      
+      // Set up event handlers
+      synthesizer.synthesisStarted = () => {
+        console.log('Speech synthesis started');
+      };
+      
+      synthesizer.synthesisCompleted = () => {
+        console.log('Speech synthesis completed');
+        resolve();
+      };
+      
+      synthesizer.SynthesisCanceled = (_, e) => {
+        console.error('Speech synthesis canceled:', e);
+        reject(new Error(`Speech synthesis canceled: ${e.errorDetails || 'Unknown error'}`));
+      };
+      
+      // Start synthesis
+      synthesizer.speakTextAsync(
+        text,
+        (result) => {
+          if (result.reason === sdk.ResultReason.SynthesizingAudioCompleted) {
+            console.log('Speech synthesis successful');
+            synthesizer.close();
+            resolve();
+          } else {
+            console.error('Speech synthesis failed:', result);
+            synthesizer.close();
+            reject(new Error(`Speech synthesis failed: ${result.errorDetails || 'Unknown error'}`));
+          }
+        },
+        (error) => {
+          console.error('Speech synthesis error:', error);
+          synthesizer.close();
+          reject(error);
+        }
+      );
+    } catch (error) {
+      console.error('Error in textToSpeech:', error);
+      reject(error);
+    }
+  });
+};

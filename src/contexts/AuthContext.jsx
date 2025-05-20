@@ -1,7 +1,12 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 
-const AuthContext = createContext();
+const AuthContext = createContext({
+  user: null,
+  loading: true,
+  login: () => {},
+  logout: () => {}
+});
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
@@ -14,9 +19,11 @@ export function AuthProvider({ children }) {
       try {
         // You can implement your actual authentication check here
         // For now, we'll just check localStorage
-        const storedUser = localStorage.getItem('user');
-        if (storedUser) {
-          setUser(JSON.parse(storedUser));
+        if (typeof window !== 'undefined') {
+          const storedUser = localStorage.getItem('user');
+          if (storedUser) {
+            setUser(JSON.parse(storedUser));
+          }
         }
       } catch (error) {
         console.error('Auth check failed:', error);
@@ -27,13 +34,14 @@ export function AuthProvider({ children }) {
 
     checkAuth();
   }, []);
-
   const login = async (credentials) => {
     try {
       // Implement your actual login logic here
       // For now, we'll just store the user in localStorage
       const userData = { id: 1, ...credentials }; // Replace with actual user data
-      localStorage.setItem('user', JSON.stringify(userData));
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('user', JSON.stringify(userData));
+      }
       setUser(userData);
       return true;
     } catch (error) {
@@ -41,11 +49,12 @@ export function AuthProvider({ children }) {
       return false;
     }
   };
-
   const logout = () => {
-    localStorage.removeItem('user');
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('user');
+    }
     setUser(null);
-    router.push('/login');
+    router.push('/sign-in');
   };
 
   const value = {
