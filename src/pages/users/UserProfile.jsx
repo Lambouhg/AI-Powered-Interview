@@ -1,5 +1,5 @@
-// pages/userProfile.js
 "use client";
+
 import React, { useEffect, useState } from "react";
 import SidebarUser from "../../components/Sidebar";
 import HeaderCompany from "../../components/DashboardHeader";
@@ -11,9 +11,12 @@ import SkillsSection from "../../components/profile/SkillsSection";
 import AdditionalDetailsSection from "../../components/profile/AdditionalDetailsSection";
 import SocialLinksSection from "../../components/profile/SocialLinksSection";
 import axios from "axios";
-import { Loader } from "lucide-react"; // Sử dụng lucide-react để hiển thị loading icon
+import { Loader } from "lucide-react";
 import img1 from "../../assets/b79144e03dc4996ce319ff59118caf65.jpg";
 import ShortVideoSection from "../../components/profile/ShortVideoSection";
+import UploadCVSection from "../../components/profile/UploadCVSection";
+import { useRouter } from "next/router";
+
 const UserProfile = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -40,53 +43,32 @@ const UserProfile = () => {
   const [video, setVideo] = useState("");
   const [newLanguage, setNewLanguage] = useState("");
   const [isOpen, setIsOpen] = useState(false);
+  const [cvUrl, setCvUrl] = useState("");
+  const router = useRouter(); // Initialize router for navigation
+
   useEffect(() => {
     const fetchUserData = async () => {
       try {
         setIsLoading(true);
         const res = await axios.get("/api/user");
         const userData = res.data.user;
-        setName(
-          typeof userData.name === "string" ? userData.name : "Have't data yet"
-        );
+        setName(userData.name || "Have't data yet");
         setAvatar(userData.avatar || img1);
-        setLocation(
-          typeof userData.location === "string"
-            ? userData.location
-            : "Have't data yet"
-        );
-        setAboutMe(
-          typeof userData.aboutMe === "string"
-            ? userData.aboutMe
-            : "Have't data yet"
-        );
-        setEmail(
-          typeof userData.email === "string"
-            ? userData.email
-            : "Have't data yet"
-        );
-        setPhone(
-          typeof userData.phone === "string"
-            ? userData.phone
-            : "Have't data yet"
-        );
-        setLanguages(
-          Array.isArray(userData.Languages) ? userData.Languages : []
-        );
-        const socialLinks = userData.socialLinks || {};
-        setInstagram(socialLinks.instagram || "Have't data yet");
-        setTwitter(socialLinks.twitter || "Have't data yet");
-        setFacebook(socialLinks.facebook || "Have't data yet");
-        setLinkedin(socialLinks.linkedin || "Have't data yet");
-        setYoutube(socialLinks.youtube || "Have't data yet");
-        setExperiences(
-          Array.isArray(userData.expereince) ? userData.expereince : []
-        );
-        setEducations(
-          Array.isArray(userData.education) ? userData.education : []
-        );
-        setSkills(Array.isArray(userData.skills) ? userData.skills : []);
-        setVideo(typeof userData.video === "string" ? userData.video : "");
+        setLocation(userData.location || "Have't data yet");
+        setAboutMe(userData.aboutMe || "Have't data yet");
+        setEmail(userData.email || "Have't data yet");
+        setPhone(userData.phone || "Have't data yet");
+        setLanguages(userData.Languages || []);
+        setInstagram(userData.socialLinks?.instagram || "Have't data yet");
+        setTwitter(userData.socialLinks?.twitter || "Have't data yet");
+        setFacebook(userData.socialLinks?.facebook || "Have't data yet");
+        setLinkedin(userData.socialLinks?.linkedin || "Have't data yet");
+        setYoutube(userData.socialLinks?.youtube || "Have't data yet");
+        setExperiences(userData.expereince || []);
+        setEducations(userData.education || []);
+        setSkills(userData.skills || []);
+        setVideo(userData.video || "");
+        setCvUrl(userData.cvUrl || "");
       } catch (err) {
         setError("Không thể tải dữ liệu người dùng.");
       } finally {
@@ -96,12 +78,14 @@ const UserProfile = () => {
 
     fetchUserData();
   }, []);
-  const addSkill = () => {
-    if (newSkill.trim()) {
-      setSkills((prev) => [...prev, newSkill.trim()]);
-      setNewSkill("");
-      setShowSkillForm(false);
-    }
+
+  const handleSkillChange = (e) => {
+    setNewSkill(e.target.value);
+  };
+
+  const handleViewHistory = () => {
+    // Navigate to the history page to view evaluation results
+    router.push("/evaluate-cv/EvaluationHistory");
   };
 
   if (isLoading) {
@@ -119,9 +103,7 @@ const UserProfile = () => {
       </div>
     );
   }
-  const handleSkillChange = (e) => {
-    setNewSkill(e.target.value);
-  };
+
   return (
     <div className="flex w-screen h-screen overflow-hidden font-sans bg-gray-100">
       {/* Sidebar */}
@@ -144,7 +126,7 @@ const UserProfile = () => {
                 setAboutMe={setAboutMe}
                 location={location}
                 setLocation={setLocation}
-                isEditing={isEditing}
+                isEditing={false}
                 setIsEditing={setIsEditing}
                 email={email}
                 setEmail={setEmail}
@@ -171,41 +153,37 @@ const UserProfile = () => {
             </div>
 
             {/* About Me */}
-            <AboutSection
-              isEditing={isEditing}
-              aboutMe={aboutMe}
-              setAboutMe={setAboutMe}
-            />
+            <AboutSection isEditing={false} aboutMe={aboutMe} setAboutMe={setAboutMe} />
 
             {/* Experience Section */}
             <ExperienceSection
               expereince={expereince}
               setExperiences={setExperiences}
-              showExperienceForm={showExperienceForm}
-              setShowExperienceForm={setShowExperienceForm}
-              isEditing={isEditing}
+              showExperienceForm={false}
+              setShowExperienceForm={() => {}}
+              isEditing={false}
             />
 
             {/* Education Section */}
             <EducationSection
               educations={education}
               setEducations={setEducations}
-              showEducationForm={showEducationForm}
-              setShowEducationForm={setShowEducationForm}
-              isEditing={isEditing}
+              showEducationForm={false}
+              setShowEducationForm={() => {}}
+              isEditing={false}
             />
 
             {/* Skills Section */}
             <SkillsSection
-              isEditing={isEditing}
+              isEditing={false}
               skills={skills}
               setSkills={setSkills}
-              showSkillForm={showSkillForm}
-              setShowSkillForm={setShowSkillForm}
+              showSkillForm={false}
+              setShowSkillForm={() => {}}
               newSkill={newSkill}
               setNewSkill={setNewSkill}
               handleSkillChange={handleSkillChange}
-              addSkill={addSkill}
+              addSkill={() => {}}
             />
           </div>
 
@@ -214,7 +192,7 @@ const UserProfile = () => {
             <div className="bg-white rounded-lg shadow p-6">
               <h2 className="text-lg font-semibold mb-4">Additional Details</h2>
               <AdditionalDetailsSection
-                isEditing={isEditing}
+                isEditing={false}
                 email={email}
                 setEmail={setEmail}
                 phone={phone}
@@ -229,7 +207,7 @@ const UserProfile = () => {
             <div className="bg-white rounded-lg shadow p-6">
               <h2 className="text-lg font-semibold mb-4">Social Links</h2>
               <SocialLinksSection
-                isEditing={isEditing}
+                isEditing={false}
                 instagram={instagram}
                 setInstagram={setInstagram}
                 twitter={twitter}
@@ -242,13 +220,23 @@ const UserProfile = () => {
                 setYoutube={setYoutube}
               />
             </div>
+
+            {/* Add button to view evaluation history */}
             <div className="bg-white rounded-lg shadow p-6">
-              <h2 className="text-lg font-semibold mb-4">Short Introduce</h2>
-              <ShortVideoSection
-                isEditing={isEditing}
-                video={video}
-                setVideo={setVideo}
-              />
+              <h2 className="text-lg font-semibold mb-4">View Evaluation History</h2>
+              <button
+                onClick={handleViewHistory} // Navigate to the history page
+                className="bg-yellow-500 hover:bg-yellow-600 text-white text-sm font-medium py-2 px-6 rounded-lg shadow-md transition transform hover:scale-105"
+              >
+                View Evaluation History
+              </button>
+            </div>
+
+            <div className="bg-white rounded-lg shadow p-6">
+              <h2 className="text-lg font-semibold mb-4">Upload CV</h2>
+              <UploadCVSection
+                  initialUrl={cvUrl}
+                  onUploadSuccess={(url) => setCvUrl(url)} />
             </div>
           </div>
         </div>

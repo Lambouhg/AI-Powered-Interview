@@ -1,4 +1,3 @@
-
 import connectDB from "../../../lib/mongodb";
 import InterviewPractice from "../../../models/InterviewPractice";
 import { evaluateAnswer } from "../../../utils/interview/geminiUtils";
@@ -29,9 +28,7 @@ export default async function handler(req, res) {
     const context = {
       role: session.role,
       level: session.level,
-      field: session.field,
-      category: session.category,
-      difficulty: session.difficulty
+      category: session.category
     };
 
     // Evaluate the answer
@@ -44,8 +41,7 @@ export default async function handler(req, res) {
       feedback: evaluation.feedback,
       suggestions: evaluation.suggestions,
       strongPoints: evaluation.strongPoints,
-      missedConcepts: evaluation.missedConcepts,
-      overallEvaluation: evaluation.overallEvaluation
+      missedConcepts: evaluation.missedConcepts
     };
     session.questions[questionIndex].status = 'reviewed';
 
@@ -60,7 +56,6 @@ export default async function handler(req, res) {
     if (session.questions.every(q => q.status === 'reviewed')) {
       session.status = 'completed';
       session.endTime = new Date();
-      session.duration = (session.endTime - session.startTime) / 1000; // in seconds
     }
 
     await session.save();

@@ -15,22 +15,15 @@ export default function TestInterviewPractice() {
   const [isEvaluating, setIsEvaluating] = useState(false);
   const [evaluation, setEvaluation] = useState(null);
   const [selectedOptions, setSelectedOptions] = useState({
-    field: '',
     role: '',
     level: '',
-    category: '',
-    difficulty: ''
+    category: ''
   });
   const [error, setError] = useState(null);
 
-  const fields = {
-    "Information Technology": {
-      roles: ["Software Developer", "QA Engineer", "Business Analyst", "Project Manager"],
-      levels: ["Intern", "Junior", "Senior", "Lead", "Manager"],
-      categories: ["Technical", "Behavioral", "System Design", "Problem Solving"],
-      difficulties: ["Easy", "Medium", "Hard"]
-    }
-  };
+  const roles = ["Software Developer", "QA Engineer", "Business Analyst", "Project Manager"];
+  const levels = ["Intern", "Junior", "Senior", "Lead", "Manager"];
+  const categories = ["Technical", "Behavioral", "System Design", "Problem Solving"];
 
   const handleOptionChange = (field, value) => {
     setSelectedOptions(prev => ({
@@ -108,11 +101,9 @@ export default function TestInterviewPractice() {
       setSession(null);
       setCurrentQuestionIndex(0);
       setSelectedOptions({
-        field: '',
         role: '',
         level: '',
-        category: '',
-        difficulty: ''
+        category: ''
       });
     }
   };
@@ -132,98 +123,56 @@ export default function TestInterviewPractice() {
           <div className="bg-white p-6 rounded-lg shadow-lg">
             <h2 className="text-xl font-semibold mb-6">Select Interview Settings</h2>
             <div className="space-y-6">
-              {/* Field Selection */}
+              {/* Role Selection */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Field
+                  Role
                 </label>
                 <select
-                  value={selectedOptions.field}
-                  onChange={(e) => handleOptionChange('field', e.target.value)}
+                  value={selectedOptions.role}
+                  onChange={(e) => handleOptionChange('role', e.target.value)}
                   className="w-full p-2 border rounded-md"
                 >
-                  <option value="">Select Field</option>
-                  {Object.keys(fields).map(field => (
-                    <option key={field} value={field}>{field}</option>
+                  <option value="">Select Role</option>
+                  {roles.map(role => (
+                    <option key={role} value={role}>{role}</option>
                   ))}
                 </select>
               </div>
 
-              {/* Role Selection */}
-              {selectedOptions.field && (
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Role
-                  </label>
-                  <select
-                    value={selectedOptions.role}
-                    onChange={(e) => handleOptionChange('role', e.target.value)}
-                    className="w-full p-2 border rounded-md"
-                  >
-                    <option value="">Select Role</option>
-                    {fields[selectedOptions.field].roles.map(role => (
-                      <option key={role} value={role}>{role}</option>
-                    ))}
-                  </select>
-                </div>
-              )}
-
               {/* Level Selection */}
-              {selectedOptions.role && (
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Level
-                  </label>
-                  <select
-                    value={selectedOptions.level}
-                    onChange={(e) => handleOptionChange('level', e.target.value)}
-                    className="w-full p-2 border rounded-md"
-                  >
-                    <option value="">Select Level</option>
-                    {fields[selectedOptions.field].levels.map(level => (
-                      <option key={level} value={level}>{level}</option>
-                    ))}
-                  </select>
-                </div>
-              )}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Level
+                </label>
+                <select
+                  value={selectedOptions.level}
+                  onChange={(e) => handleOptionChange('level', e.target.value)}
+                  className="w-full p-2 border rounded-md"
+                >
+                  <option value="">Select Level</option>
+                  {levels.map(level => (
+                    <option key={level} value={level}>{level}</option>
+                  ))}
+                </select>
+              </div>
 
               {/* Category Selection */}
-              {selectedOptions.level && (
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Category
-                  </label>
-                  <select
-                    value={selectedOptions.category}
-                    onChange={(e) => handleOptionChange('category', e.target.value)}
-                    className="w-full p-2 border rounded-md"
-                  >
-                    <option value="">Select Category</option>
-                    {fields[selectedOptions.field].categories.map(category => (
-                      <option key={category} value={category}>{category}</option>
-                    ))}
-                  </select>
-                </div>
-              )}
-
-              {/* Difficulty Selection */}
-              {selectedOptions.category && (
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Difficulty
-                  </label>
-                  <select
-                    value={selectedOptions.difficulty}
-                    onChange={(e) => handleOptionChange('difficulty', e.target.value)}
-                    className="w-full p-2 border rounded-md"
-                  >
-                    <option value="">Select Difficulty</option>
-                    {fields[selectedOptions.field].difficulties.map(difficulty => (
-                      <option key={difficulty} value={difficulty}>{difficulty}</option>
-                    ))}
-                  </select>
-                </div>
-              )}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Category
+                </label>
+                <select
+                  value={selectedOptions.category}
+                  onChange={(e) => handleOptionChange('category', e.target.value)}
+                  className="w-full p-2 border rounded-md"
+                >
+                  <option value="">Select Category</option>
+                  {categories.map(category => (
+                    <option key={category} value={category}>{category}</option>
+                  ))}
+                </select>
+              </div>
 
               <button
                 onClick={handleStartSession}
@@ -254,15 +203,9 @@ export default function TestInterviewPractice() {
       {step === 'evaluation' && evaluation && (
         <EvaluationResult
           evaluation={evaluation}
+          question={session.questions[currentQuestionIndex]}
           onNext={handleNext}
         />
-      )}
-
-      {step === 'error' && (
-        <div className="bg-red-100 text-red-800 p-4 rounded-lg shadow-lg">
-          <h2 className="text-xl font-semibold">Error</h2>
-          <p>Something went wrong. Please try again.</p>
-        </div>
       )}
     </div>
   );

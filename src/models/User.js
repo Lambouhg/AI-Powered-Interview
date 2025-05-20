@@ -1,27 +1,26 @@
-//models/user.js
+// models/user.js
 import mongoose from "mongoose";
+
 const UserSchema = new mongoose.Schema({
   clerkId: { type: String, unique: true, required: true },
   email: { type: String, unique: true, required: true },
   name: { type: String },
   avatar: { type: String },
   location: { type: String, default: "none" },
-  // gender: {
-  //   type: String,
-  //   enum: ["female", "male", "other"],
-  //   default: "other",
-  // },
   aboutMe: { type: String, default: "none" },
   phone: { type: String, default: "none" },
-  video: { type: String, default: "none" }, // Đường dẫn đến video giới thiệu
+
+  // ✅ Thêm trường này để lưu trực tiếp link CV
+  cvUrl: { type: String, default: "" },
+
   socialLinks: {
-    // Các liên kết mạng xã hội
     instagram: { type: String, default: null },
     twitter: { type: String, default: null },
     facebook: { type: String, default: null },
     linkedin: { type: String, default: null },
     youtube: { type: String, default: null },
   },
+
   expereince: [
     {
       company: { type: String },
@@ -31,6 +30,7 @@ const UserSchema = new mongoose.Schema({
       description: { type: String },
     },
   ],
+
   education: [
     {
       school: { type: String },
@@ -41,6 +41,7 @@ const UserSchema = new mongoose.Schema({
       description: { type: String },
     },
   ],
+
   Languages: { type: [String], default: () => ["English"] },
 
   role: { type: String, enum: ["admin", "company", "user"], default: "user" },
@@ -48,23 +49,36 @@ const UserSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: "Company",
     default: null,
-  }, // Chỉ có nếu role là "company"
+  },
+
   skills: { type: [String] },
-  appliedJobs: [{ type: mongoose.Schema.Types.ObjectId, ref: "Applicant" }], // Danh sách job đã apply
 
+  appliedJobs: [{ type: mongoose.Schema.Types.ObjectId, ref: "Applicant" }],
 
-// intermview practice
-  interviewPractices: [{
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'InterviewPractice'
-  }],
-  
+  interviewPractices: [
+    {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "InterviewPractice",
+    },
+  ],
+
   interviewStats: {
     totalSessions: { type: Number, default: 0 },
     averageScore: { type: Number, default: 0 },
     completedTopics: [String],
-    lastPracticeDate: Date
-  }
+    lastPracticeDate: Date,
+  },
+
+  evaluations: [
+    {
+      cvUrl: { type: String, required: true },
+      score: { type: Number, required: true },
+      feedback: { type: String, required: true },
+      suggestions: { type: [String], required: true },
+      highlights: { type: [String], required: true },
+      date: { type: Date, default: Date.now },
+    },
+  ],
 });
 
 export default mongoose.models.User || mongoose.model("User", UserSchema);

@@ -1,7 +1,9 @@
 import { ClerkProvider } from "@clerk/nextjs";
 import Head from "next/head"; // Import Head từ next/head
+import { Toaster } from "react-hot-toast"; // Thay ToastProvider bằng Toaster
 import "./globals.css";
 import ChatbaseWidget from "../components/ChatbaseWidget";
+
 const clerkKey = process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY;
 
 function MyApp({ Component, pageProps }) {
@@ -16,6 +18,7 @@ function MyApp({ Component, pageProps }) {
         <meta name="description" content="This is my awesome app!" />
         <link rel="icon" href="/logo.png" />
       </Head>
+      <Toaster /> {/* Thêm Toaster ở đây */}
       <ChatbaseWidget />
       <Component {...pageProps} />
     </ClerkProvider>

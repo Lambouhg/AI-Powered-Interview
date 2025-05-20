@@ -3,7 +3,7 @@ import connectDB from "../../../../lib/mongodb";
 import Applicant from "../../../../models/applicant";
 import User from "../../../../models/User";
 import { getAuth } from "@clerk/nextjs/server";
-import axios from "axios"; // Import axios
+import { evaluateApplicant } from "../../../../utils/geminiUtils";
 import getRawBody from "raw-body";
 
 export const config = {
@@ -11,8 +11,6 @@ export const config = {
     bodyParser: false,
   },
 };
-
-const apiKey = process.env.OPENROUTER_API_KEY;
 
 export default async function handler(req, res) {
   await connectDB();
@@ -52,91 +50,48 @@ export default async function handler(req, res) {
         });
       }
 
-      // Tính điểm bằng OpenRouter nếu chưa có score
+      // Evaluate applicant using Gemini if no score exists
       if (applicant.score === 0 || !applicant.scoreReason) {
-        const job = applicant.jobID;
-        const jobText = `
-          Job Title: ${job.title}
-          Description: ${job.jobDescription}
-          Required Skills: ${job.requiredSkills.join(", ")}
-          Responsibilities: ${job.responsibilities}
-          Who You Are: ${job.whoYouAre}
-          Nice to Haves: ${job.niceToHaves || "None"}
-        `;
-        const applicantText = `
-          Resume: ${applicant.resume || "Not provided"}
-          Additional Info: ${applicant.additionalInfo || "Not provided"}
-          Skills: ${(applicant.userID.skills || []).join(", ")}
-          Experience: ${JSON.stringify(applicant.userID.experience || [])}
-        `;
+        const jobInfo = {
+          title: applicant.jobID.title,
+          description: applicant.jobID.jobDescription,
+          requiredSkills: applicant.jobID.requiredSkills,
+          responsibilities: applicant.jobID.responsibilities,
+          whoYouAre: applicant.jobID.whoYouAre,
+          niceToHaves: applicant.jobID.niceToHaves
+        };
 
-        const prompt = `
-        Đánh giá mức độ phù hợp của ứng viên với công việc dựa trên:
-        - Thông tin công việc: "${jobText}"
-        - Thông tin ứng viên: "${applicantText}"
-        Trả về một điểm số từ 1.0 đến 5.0 (có thể là số thập phân như 2.3, 3.5) và một lý do ngắn gọn bằng tiếng Việt theo định dạng: "Điểm: X.X - Lý do".
-        `;
+        const applicantInfo = {
+          resume: applicant.resume,
+          additionalInfo: applicant.additionalInfo,
+          skills: applicant.userID.skills,
+          experience: applicant.userID.experience
+        };
 
-        // Gọi API OpenRouter
-        const response = await axios.post(
-          "https://openrouter.ai/api/v1/chat/completions",
-          {
-            model: "openai/gpt-3.5-turbo",
-            messages: [
-              { role: "user", content: prompt },
-            ],
-            temperature: 0.7,
-          },
-          {
-            headers: {
-              "Authorization": `Bearer ${apiKey}`,
-              "Content-Type": "application/json",
-            },
-          }
-        );
-
-        const aiResult = response.data.choices[0].message.content.trim();
-        // Sửa regex để khớp với "Điểm: X.X - Lý do"
-        const scoreMatch = aiResult.match(/Điểm: (\d+\.\d+|\d+) - (.*)/);
-        const score = scoreMatch ? parseFloat(scoreMatch[1]) : 0;
-        const reason = scoreMatch ? scoreMatch[2] : "Evaluated by AI";
-
-        // Giới hạn score trong khoảng 1.0 - 5.0
-        applicant.score = Math.min(Math.max(score, 1.0), 5.0);
-        applicant.scoreReason = reason;
-        await applicant.save();
+        try {
+          const evaluation = await evaluateApplicant(jobInfo, applicantInfo);
+          
+          // Update applicant with evaluation results
+          applicant.score = evaluation.score;
+          applicant.scoreReason = evaluation.reason;
+          applicant.strengths = evaluation.strengths;
+          applicant.weaknesses = evaluation.weaknesses;
+          applicant.recommendations = evaluation.recommendations;
+          
+          await applicant.save();
+        } catch (error) {
+          console.error("Error evaluating applicant:", error);
+          // Continue with the response even if evaluation fails
+        }
       }
 
-      res.status(200).json({
-        message: "Applicant details fetched successfully",
-        applicant: {
-          _id: applicant._id,
-          userID: applicant.userID._id,
-          status: applicant.status,
-          jobID: applicant.jobID._id,
-          fullName: applicant.fullName,
-          email: applicant.email,
-          phoneNumber: applicant.phoneNumber,
-          currentJobTitle: applicant.currentJobTitle,
-          linkedinURL: applicant.linkedinURL,
-          portfolioURL: applicant.portfolioURL,
-          additionalInfo: applicant.additionalInfo,
-          resume: applicant.resume,
-          createdAt: applicant.createdAt,
-          updatedAt: applicant.updatedAt,
-          avatar: applicant.userID.avatar,
-          name: applicant.userID.name,
-          appliedJobs: applicant.userID.appliedJobs,
-          socialLinks: applicant.userID.socialLinks,
-          skills: applicant.userID.skills,
-          experience: applicant.userID.experience,
-          score: applicant.score,
-          scoreReason: applicant.scoreReason,
-        },
-      });
+      res.status(200).json(applicant);
     } catch (error) {
       console.error("Error fetching applicant:", error);
-      res.status(500).json({ message: "Internal Server Error", error: error.message });
+      res.status(500).json({ 
+        message: "Internal server error",
+        error: error.message 
+      });
     }
   } else if (req.method === "PUT") {
     const { applicant_id } = req.query;
@@ -190,6 +145,6 @@ export default async function handler(req, res) {
       res.status(500).json({ message: "Internal Server Error", error: error.message });
     }
   } else {
-    return res.status(405).json({ message: "Method Not Allowed" });
+    res.status(405).json({ message: "Method not allowed" });
   }
 }
