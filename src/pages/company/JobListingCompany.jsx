@@ -76,7 +76,7 @@ const JobListingPage = () => {
           )}
           {error && (
             <div className="text-center p-6 text-red-500 bg-red-50 rounded-lg">
-              {error}
+              Error: {error}
             </div>
           )}
 

@@ -115,14 +115,14 @@ const MessageDetail = ({ conversation, user }) => {
 
   if (loadingConversation) {
     return (
-      <div className="flex flex-col items-center justify-center h-full bg-gray-50 rounded-2xl shadow">
+      <div className="flex flex-col items-center justify-center h-full bg-gray-50">
         <p className="text-gray-500">Loading conversation...</p>
       </div>
     );
   }
   if (!conversation || !conversation.users) {
     return (
-      <div className="w-full flex flex-col items-center justify-center bg-gray-100 border-2 border-gray-300 rounded-2xl shadow-md p-6">
+      <div className="w-full flex flex-col items-center justify-center bg-gray-100 border-2 border-gray-300 rounded-lg shadow-md p-6">
         <svg
           xmlns="http://www.w3.org/2000/svg"
           className="h-16 w-16 text-gray-400 mb-4"
@@ -145,16 +145,23 @@ const MessageDetail = ({ conversation, user }) => {
     );
   }
   return (
-    <div className="flex flex-col h-full w-full bg-transparent">
+    <div className="flex flex-col h-full p-4 w-full bg-gray-50">
       {/* Header */}
-      <MessageHeader recipientEmail={recipientEmail} />
+      <div className="h-auto">
+        {loadingRecipient ? (
+          <p className="text-gray-500 text-center py-2">Loading recipient...</p>
+        ) : (
+          <MessageHeader recipientEmail={recipientEmail} />
+        )}
+      </div>
+
       {/* Messages */}
       {loadingMessages ? (
-        <div className="flex flex-col flex-1 justify-center items-center bg-white rounded-b-2xl shadow">
+        <div className="flex flex-col flex-1 justify-center items-center">
           <p className="text-gray-500">Loading messages...</p>
         </div>
       ) : (
-        <>
+        <div className="w-full flex flex-col flex-1 justify-between gap-4 px-4 pb-4 overflow-y-auto">
           <MessageContent
             messages={messages}
             userEmail={userEmail}
@@ -165,7 +172,7 @@ const MessageDetail = ({ conversation, user }) => {
             setInput={setInput}
             sendMessage={sendMessage}
           />
-        </>
+        </div>
       )}
     </div>
   );

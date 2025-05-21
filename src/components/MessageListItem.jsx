@@ -13,18 +13,17 @@ const MessageListItem = ({ id, name, time, preview, active, onClick }) => {
 
   return (
     <div
-      className={`flex items-center gap-3 px-4 py-3 cursor-pointer transition-colors ${active ? "bg-white shadow rounded-xl" : "hover:bg-white hover:shadow rounded-xl"}`}
+      className={`flex p-4 gap-4 border-b border-gray-200 cursor-pointer ${
+        active ? "bg-blue-50" : "hover:bg-gray-50"
+      }`}
       onClick={onClick}
     >
-      <div className="w-10 h-10 rounded-full bg-blue-200 flex items-center justify-center font-bold text-lg text-blue-700">
-        {firstLetter}
-      </div>
-      <div className="flex-1 min-w-0">
+      <div className="flex flex-col flex-1 overflow-hidden">
         <div className="flex justify-between items-center">
-          <span className="font-semibold text-gray-900 truncate text-base">{displayName}</span>
-          <span className="text-xs text-gray-400 ml-2 whitespace-nowrap">{time}</span>
+          <h3 className="font-medium text-sm md:text-base">{displayName}</h3>
+          <span className="text-xs text-gray-500">{time}</span>
         </div>
-        <span className="text-xs text-gray-500 truncate block">{preview}</span>
+        <p className="text-xs md:text-sm text-gray-600 truncate">{preview}</p>
       </div>
     </div>
   );

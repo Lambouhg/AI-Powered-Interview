@@ -43,42 +43,91 @@ const CompanySidebar = ({ isOpen, setIsOpen }) => {
       >
         {isOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
       </button>
-      <aside className="hidden md:flex flex-col justify-between h-full w-80 bg-[#f0f2f5] rounded-xl shadow p-4">
+      <aside
+        className={`
+    fixed 
+    top-0 
+    left-0 
+    w-64 
+    h-full 
+    bg-white 
+    shadow-md 
+    p-6 
+    flex-col 
+    justify-between 
+    z-40 
+    transform 
+    transition-transform 
+    duration-300 
+    ${isOpen ? "translate-x-0" : "-translate-x-full"}
+    md:static 
+    md:translate-x-0 
+    md:flex
+    md:h-screen
+  `}
+      >
         <div>
           <h2
-            className="text-2xl font-bold text-blue-600 mb-6 cursor-pointer px-2 pt-2"
+            className="text-3xl font-bold text-blue-600 mb-8 cursor-pointer"
             onClick={() => router.push("/")}
           >
             Job Finder
           </h2>
-          <div className="flex items-center gap-3 px-2 mb-6">
-            <img
-              src={user?.imageUrl}
-              alt="avatar"
-              className="w-12 h-12 rounded-full border-2 border-blue-400 object-cover"
+          <nav className="space-y-4">
+            <NavItem
+              icon={<FiHome />}
+              label="Dashboard"
+              href="/company/companydashboard"
             />
-            <div>
-              <p className="font-semibold text-base text-gray-900">{user?.fullName || "Unknown User"}</p>
-              <p className="text-xs text-green-500 font-medium">● Online</p>
-            </div>
-          </div>
-          <nav className="space-y-2">
-            <NavItem icon={<FiHome />} label="Dashboard" href="/company/companydashboard" />
-            <NavItem icon={<FiMessageSquare />} label="Messages" href="/company/companymessage" />
-            <NavItem icon={<FiUser />} label="Company Profile" href="/company/companyprofile" />
-            <NavItem icon={<FiUsers />} label="All Applicants" href="/company/AllApplication" />
-            <NavItem icon={<FiBriefcase />} label="Job Listings" href="/company/JobListingCompany" />
-            <NavItem icon={<FiCalendar />} label="My Schedule" href="/company/Calender" />
-            <NavItem icon={<FiSettings />} label="Settings" href="/company/Settings" />
+            <NavItem
+              icon={<FiMessageSquare />}
+              label="Messages"
+              href="/company/companymessage"
+            />
+            <NavItem
+              icon={<FiUser />}
+              label="Company Profile"
+              href="/company/companyprofile"
+            />
+            <NavItem
+              icon={<FiUsers />}
+              label="All Applicants"
+              href="/company/AllApplication"
+            />
+            <NavItem
+              icon={<FiBriefcase />}
+              label="Job Listings"
+              href="/company/JobListingCompany"
+            />
+            <NavItem
+              icon={<FiCalendar />}
+              label="My Schedule"
+              href="/company/Calender"
+            />
+            <NavItem
+              icon={<FiSettings />}
+              label="Settings"
+              href="/company/Settings"
+            />
           </nav>
         </div>
-        <div className="space-y-4 border-t pt-4 mt-4">
+
+        <div className="space-y-4 border-t-2 gray-500 pt-4">
+          <div className="flex items-center space-x-3">
+            <UserButton />
+            <div>
+              <p className="text-sm font-semibold">{user.fullName}</p>
+              <p className="text-xs text-gray-500">
+                {user.primaryEmailAddress?.emailAddress}
+              </p>
+            </div>
+          </div>
           <button
             onClick={() => {
               localStorage.removeItem("user");
               signOut({ redirectUrl: "/" });
             }}
-            className="flex items-center gap-2 p-2 rounded-lg cursor-pointer text-red-600 hover:bg-red-100 w-full justify-center"
+            className="flex items-center space-x-3 p-3 rounded-lg cursor-pointer text-red-600 hover:bg-red-100 w-full"
           >
             <FiLogOut className="text-lg" />
             <span className="text-sm font-medium">Đăng xuất</span>

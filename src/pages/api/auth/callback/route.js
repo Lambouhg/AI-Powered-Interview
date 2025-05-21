@@ -23,7 +23,7 @@ export default async function handler(req, res) {
       let role = "user";
       let companyId = null;
 
-      if (userData.email_addresses[0].email_address === "sangxuan2003@gmail.com") {
+      if (userData.email_addresses[0].email_address === "exw81173@jioso.com") {
         role = "admin";
       }
 

@@ -35,7 +35,7 @@
     "email-validator": "^2.0.4",
     "firebase": "^11.5.0",
     "formidable": "^3.5.4",
-    "framer-motion": "^12.12.1",
+    "framer-motion": "^12.4.10",
     "lucide-react": "^0.475.0",
     "microsoft-cognitiveservices-speech-sdk": "^1.43.1",
     "moment": "^2.30.1",
