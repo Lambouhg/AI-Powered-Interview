@@ -6,7 +6,7 @@ if (!process.env.GOOGLE_API_KEY) {
 
 // Initialize Gemini API
 const genAI = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY);
-const model = genAI.getGenerativeModel({ model: "gemini-pro" });
+const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
 
 // Interview Practice Functions
 export const generateQuestions = async (field, role, level, category, difficulty) => {
@@ -99,22 +99,23 @@ export const evaluateAnswer = async (question, answer, context) => {
 // Job Analysis Functions
 export const analyzeJobDescription = async (jobDescription, responsibilities, whoYouAre, niceToHaves) => {
   const prompt = `
-    Analyze the following job description and extract key information:
-    Job Description: ${jobDescription}
-    Responsibilities: ${responsibilities}
-    Who You Are: ${whoYouAre}
-    Nice to Haves: ${niceToHaves}
-    
-    Return a JSON object with the following structure:
+    Từ nội dung sau, hãy liệt kê các kỹ năng, kinh nghiệm, trình độ, kỹ năng mềm, nhận xét công việc... các yếu tố cần thiết cho để tạo việc.
+    Trả về kết quả theo định dạng JSON với mỗi danh mục là một mảng. Ví dụ:
     {
-      "skills": ["skill1", "skill2"],
-      "experience": ["exp1", "exp2"],
-      "education": ["edu1", "edu2"],
-      "softSkills": ["soft1", "soft2"],
-      "requirements": ["req1", "req2"],
-      "responsibilities": ["resp1", "resp2"],
-      "benefits": ["benefit1", "benefit2"]
-    }`;
+      "Kỹ năng": [...],
+      "Kinh nghiệm": [...],
+      "Trình độ": [...],
+      "Kỹ năng mềm": [...],
+      "Yêu cầu": [...],
+      "Trách nhiệm": [...],
+      "Quyền lợi": [...]
+    }
+    Lưu ý: Bám sát nội dung đã gửi.
+    Nội dung:
+      Job Description: ${jobDescription}
+      Responsibilities: ${responsibilities}
+      Who You Are: ${whoYouAre}
+      Nice to Haves: ${niceToHaves}`;
 
   try {
     const result = await model.generateContent(prompt);
@@ -137,17 +138,17 @@ export const analyzeJobDescription = async (jobDescription, responsibilities, wh
 
 export const evaluateApplicant = async (jobInfo, applicantInfo) => {
   const prompt = `
-    Evaluate the applicant's fit for the position based on:
-    Job Information: ${JSON.stringify(jobInfo)}
-    Applicant Information: ${JSON.stringify(applicantInfo)}
+    Đánh giá mức độ phù hợp của ứng viên với công việc dựa trên:
+    Thông tin công việc: ${JSON.stringify(jobInfo)}
+    Thông tin ứng viên: ${JSON.stringify(applicantInfo)}
     
-    Return a JSON object with the following structure:
+    Trả về một JSON object với cấu trúc sau:
     {
-      "score": number (1.0-5.0),
-      "reason": "Detailed explanation in Vietnamese",
-      "strengths": ["strength1", "strength2"],
-      "weaknesses": ["weakness1", "weakness2"],
-      "recommendations": ["rec1", "rec2"]
+      "score": số (1.0-5.0),
+      "reason": "Giải thích chi tiết bằng tiếng Việt",
+      "strengths": ["Điểm mạnh 1", "Điểm mạnh 2"],
+      "weaknesses": ["Điểm yếu 1", "Điểm yếu 2"],
+      "recommendations": ["Đề xuất 1", "Đề xuất 2"]
     }`;
 
   try {
