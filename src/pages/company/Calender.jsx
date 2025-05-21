@@ -210,7 +210,7 @@ const CalendarApp = () => {
         setEvents(formattedEvents);
       } else {
         setEvents([]); // Đặt `events` thành mảng rỗng nếu không có dữ liệu
-        setError("No events found."); // Đặt thông báo lỗi
+        // setError("No events found."); // Đặt thông báo lỗi
       }
     } catch (err) {
       setError("Unable to fetch events.");
@@ -223,10 +223,10 @@ const CalendarApp = () => {
     const storedUser = localStorage.getItem("user");
     const userData = JSON.parse(storedUser);
     if (!userData.companyId) {
-      setError("Company ID is not available.");
+      // setError("Company is not available.");
       setDialog({
         isOpen: true,
-        type: "error",
+        type: "info",
         message: "Company ID is not available.",
         onConfirm: () => setDialog({ ...dialog, isOpen: false }),
         onCancel: null,
@@ -464,10 +464,6 @@ const CalendarApp = () => {
                     className="w-8 h-8 border-4 border-t-indigo-500 border-gray-200 rounded-full"
                   />
                 </div>
-              ) : events.length === 0 ? ( // Kiểm tra nếu không có sự kiện
-                <h2 className="text-center text-gray-500 text-lg">
-                  No events available.
-                </h2>
               ) : (
                 <Calendar
                   localizer={localizer}

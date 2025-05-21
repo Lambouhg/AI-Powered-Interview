@@ -81,36 +81,31 @@ const MessageList = ({
   );
 
   return (
-    <div className="flex flex-col bg-white shadow-sm w-full md:w-[416px] border-r-2 gray-500 h-full">
+    <div className="flex flex-col bg-[#f0f2f5] w-full h-full rounded-xl">
       {/* Search Bar */}
-      <div className="flex gap-4 items-center px-4 py-3 w-full text-base leading-relaxed text-gray-400 bg-white border-b border-gray-200">
-        <Search size={24} className="self-stretch my-auto" />
+      <div className="flex gap-2 items-center px-4 py-3 w-full text-base leading-relaxed text-gray-400 bg-[#f0f2f5]">
+        <Search size={22} className="self-stretch my-auto" />
         <input
           type="text"
-          placeholder="Search messages"
-          className="self-stretch my-auto p-2 outline-none w-full"
+          placeholder="Tìm kiếm trên Messenger"
+          className="self-stretch my-auto p-2 outline-none w-full rounded-full bg-white text-gray-700 border border-gray-200 focus:ring-2 focus:ring-blue-200"
           value={searchInput}
           onChange={(e) => setSearchInput(e.target.value)}
         />
       </div>
-
       {/* New Conversation Button */}
       <button
-        className="w-full py-3 bg-blue-500 text-white font-medium mt-4 mb-4 rounded-md hover:bg-blue-600 transition-colors"
+        className="w-[90%] mx-auto py-2 bg-blue-500 text-white font-medium mt-2 mb-2 rounded-full hover:bg-blue-600 transition-colors text-sm"
         onClick={() => toggleNewConversationDialog(true)}
       >
-        Start a new conversation
+        + Cuộc trò chuyện mới
       </button>
-
       {/* Conversation List */}
-      <div className="flex flex-col mt-2 overflow-y-auto">
+      <div className="flex flex-col mt-1 overflow-y-auto">
         {!loading &&
           filteredConversations?.map((conversation) => {
             const conversationData = conversation.data();
-            const otherUser = conversationData.users.find(
-              (user) => user !== userEmail
-            );
-
+            const otherUser = conversationData.users.find((user) => user !== userEmail);
             return (
               <MessageListItem
                 key={conversation.id}
@@ -118,17 +113,13 @@ const MessageList = ({
                 name={otherUser || "Unknown"}
                 time={
                   conversationData.lastMessageTime
-                    ? new Date(
-                        conversationData.lastMessageTime.toDate()
-                      ).toLocaleTimeString([], {
+                    ? new Date(conversationData.lastMessageTime.toDate()).toLocaleTimeString([], {
                         hour: "2-digit",
                         minute: "2-digit",
                       })
                     : "New"
                 }
-                preview={
-                  conversationData.lastMessage || "Start a conversation..."
-                }
+                preview={conversationData.lastMessage || "Bắt đầu trò chuyện..."}
                 active={selectedConversationId === conversation.id}
                 onClick={() =>
                   onSelectConversation({
@@ -140,14 +131,11 @@ const MessageList = ({
             );
           })}
       </div>
-      <Dialog
-        open={isOpenNewConversationDialog}
-        onClose={closeNewConversationDialog}
-      >
+      <Dialog open={isOpenNewConversationDialog} onClose={closeNewConversationDialog}>
         <div className="p-6">
-          <h2 className="text-xl font-bold mb-4">New Conversation</h2>
+          <h2 className="text-xl font-bold mb-4">Cuộc trò chuyện mới</h2>
           <p className="mb-4 text-gray-600">
-            Please enter an email address for the user you wish to chat with
+            Nhập email người bạn muốn trò chuyện
           </p>
           <TextField
             autoFocus
@@ -161,7 +149,7 @@ const MessageList = ({
           />
           <div className="flex justify-end gap-3">
             <Button onClick={closeNewConversationDialog} variant="outlined">
-              Cancel
+              Hủy
             </Button>
             <Button
               disabled={!recipientEmail}
@@ -169,7 +157,7 @@ const MessageList = ({
               variant="contained"
               color="primary"
             >
-              Create
+              Tạo
             </Button>
           </div>
         </div>
