@@ -3,6 +3,7 @@ import Head from "next/head"; // Import Head từ next/head
 import { Toaster } from "react-hot-toast"; // Thay ToastProvider bằng Toaster
 import "./globals.css";
 
+
 const clerkKey = process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY;
 
 function MyApp({ Component, pageProps }) {
@@ -18,6 +19,7 @@ function MyApp({ Component, pageProps }) {
         <link rel="icon" href="/logo.png" />
       </Head>
       <Toaster /> {/* Thêm Toaster ở đây */}
+     
       <Component {...pageProps} />
     </ClerkProvider>
   );

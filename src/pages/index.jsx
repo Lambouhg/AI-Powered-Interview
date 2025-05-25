@@ -10,8 +10,6 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import axios from "axios";
 import Footer from "../components/Footer";
-import img1 from "../assets/image.png"; // Verify this path
-import logo from "../assets/logo.png"
 
 export default function Home() {
   const { user } = useUser();

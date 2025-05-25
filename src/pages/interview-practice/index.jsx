@@ -3,6 +3,7 @@ import { useRouter } from 'next/router';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button, Container, Typography, Box, Paper, Grid } from '@mui/material';
 import { styled } from '@mui/material/styles';
+import { useUser } from '@clerk/nextjs';
 
 const StyledPaper = styled(Paper)(({ theme }) => ({
   padding: theme.spacing(3),
@@ -12,25 +13,33 @@ const StyledPaper = styled(Paper)(({ theme }) => ({
 
 const InterviewPractice = () => {
   const router = useRouter();
-  const { user } = useAuth();
+  const { user: authUser } = useAuth();
+  const { user: clerkUser, isLoaded: clerkLoaded } = useUser();
   const [loading, setLoading] = useState(true);
+  
   useEffect(() => {
-    if (!user) {
-      router.push('/sign-in');
-    } else {
-      setLoading(false);
+    // Check both auth contexts - if either is authenticated, allow access
+    if (clerkLoaded) {
+      if (clerkUser || authUser) {
+        setLoading(false);
+      } else {
+        router.push('/sign-in');
+      }
     }
-  }, [user, router]);
-  const handleStartPractice = () => {
+  }, [clerkUser, clerkLoaded, authUser, router]);  const handleStartPractice = () => {
     router.push('/interview-practice/test');
   };
-
   const handleStartLiveInterview = () => {
     router.push('/interview-practice/live-interview');
   };
+
   
   const handleTestAI = () => {
     router.push('/interview-practice/test-ai');
+  };
+  
+  const handleTestHeyGen = () => {
+    router.push('/interview-practice/test-heygen');
   };
 
   if (loading) {
@@ -69,15 +78,6 @@ const InterviewPractice = () => {
               Start Practice Session
             </Button>
             <Button
-              variant="contained"
-              color="secondary"
-              size="large"
-              onClick={handleStartLiveInterview}
-              sx={{ mt: 2 }}
-            >
-              Phỏng vấn trực tiếp với AI
-            </Button>
-            <Button
               variant="outlined"
               color="info"
               size="large"
@@ -85,6 +85,25 @@ const InterviewPractice = () => {
               sx={{ mt: 2 }}
             >
               Test Azure AI
+            </Button>
+            
+            <Button
+              variant="contained"
+              color="success"
+              size="large"
+              onClick={handleTestHeyGen}
+              sx={{ mt: 2 }}
+            >
+              Test HeyGen Avatar
+            </Button>
+            <Button
+              variant="outlined"
+              color="secondary"
+              size="large"
+              onClick={() => router.push('/interview-practice/streaming-avatar')}
+              sx={{ mt: 2 }}
+            >
+              Streaming Avatar (HeyGen)
             </Button>
           </Box>
         </StyledPaper>

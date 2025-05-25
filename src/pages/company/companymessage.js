@@ -8,7 +8,7 @@ import { useUser } from "@clerk/nextjs";
 import HeaderCompany from "../../components/HeaderCompany";
 import { collection, query, where } from "firebase/firestore";
 import { useCollection } from "react-firebase-hooks/firestore";
-import { db } from "../../firebase"; // Adjust the import based on your project structure
+import { db } from "../../config/firebase"; // Import from the correct config location
 
 const MessageCenter = () => {
   const { user, isLoaded } = useUser();

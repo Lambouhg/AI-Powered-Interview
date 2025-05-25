@@ -22,6 +22,6 @@
       "@/*": ["./src/*"]
     }
   },
-  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts", "src/pages/MessageCenter.jsx", "src/components/MessageContent.js", "src/components/Sidebar.jsx", "src/components/MessageListItem.jsx", "src/components/MessageList.jsx", "src/components/MessageInput.jsx", "src/components/MessageHeader.jsx", "src/components/MessageDetail.js", "src/components/SidebarSettingsSection.jsx", "src/components/SidebarLink.jsx", "next.config.ts"],
+  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts", "src/pages/MessageCenter.jsx", "src/components/MessageContent.js", "src/components/Sidebar.jsx", "src/components/MessageListItem.jsx", "src/components/MessageList.jsx", "src/components/MessageInput.jsx", "src/components/MessageHeader.jsx", "src/components/MessageDetail.js", "src/components/SidebarSettingsSection.jsx", "src/components/SidebarLink.jsx", "next.config.ts", "src/pages/interview-practice/optimized-streaming-avatar.jsx"],
   "exclude": ["node_modules"]
 }
