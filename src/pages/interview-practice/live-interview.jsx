@@ -7,7 +7,24 @@ import PreInterviewSetup from '@/components/InterviewPractice/PreInterviewSetup'
 import InterviewChat from '@/components/InterviewPractice/InterviewChat';
 import InterviewGuidelines from '@/components/InterviewPractice/InterviewGuidelines';
 import { getAIResponse } from '@/services/azureAiService';
+import { extractTopics, generateQuestionsForTopic, evaluateAnswer } from '@/services/interviewService';
 import { startSpeechRecognition, stopSpeechRecognition, textToSpeech } from '@/utils/speech/azureSpeechUtils';
+
+// Utility functions for message handling
+const createMessage = (sender, text, isError = false) => ({
+  id: Date.now(),
+  sender,
+  text,
+  timestamp: new Date().toISOString(),
+  isError
+});
+
+const addMessageToConversation = (setConversation, message, speakAiResponse, isSpeechEnabled, isSpeakerOn) => {
+  setConversation(prev => [...prev, message]);
+  if (isSpeechEnabled && isSpeakerOn && message.sender === 'ai') {
+    speakAiResponse(message.text);
+  }
+};
 
 const positionOptions = [
   'Frontend Developer',
@@ -21,6 +38,18 @@ const positionOptions = [
   'QA Engineer'
 ];
 
+const levelOptions = [
+  'Junior',
+  'Mid-level',
+  'Senior',
+  'Lead'
+];
+
+const LANGUAGES = [
+  { key: 'vi', value: 'vi-VN', label: 'Tiếng Việt' },
+  { key: 'en', value: 'en-US', label: 'English' }
+];
+
 const LiveInterview = () => {
   const router = useRouter();
   const { user: authUser } = useAuth();
@@ -30,6 +59,8 @@ const LiveInterview = () => {
   const [conversation, setConversation] = useState([]);
   const [interviewing, setInterviewing] = useState(false);
   const [position, setPosition] = useState('Frontend Developer');
+  const [level, setLevel] = useState('Junior');
+  const [language, setLanguage] = useState('vi-VN');
   const [isAiThinking, setIsAiThinking] = useState(false);
   const messageListRef = useRef(null);
   
@@ -40,6 +71,17 @@ const LiveInterview = () => {
   const [voiceLanguage, setVoiceLanguage] = useState('vi-VN');
   const [isSpeakerOn, setIsSpeakerOn] = useState(true);
   const [speechRecognizer, setSpeechRecognizer] = useState(null);
+
+  // Thêm state mới cho flow phỏng vấn
+  const [interviewState, setInterviewState] = useState({
+    phase: 'introduction', // 'introduction' | 'interviewing' | 'completed'
+    topics: [],
+    currentTopicIndex: 0,
+    questions: [],
+    currentQuestionIndex: 0
+  });
+  
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
 
   useEffect(() => {
     // Check auth
@@ -120,10 +162,17 @@ const LiveInterview = () => {
 
   const startInterview = () => {
     setInterviewing(true);
+    setInterviewState({
+      phase: 'introduction',
+      topics: [],
+      currentTopicIndex: 0,
+      questions: [],
+      currentQuestionIndex: 0
+    });
     const initialMessage = {
       id: Date.now(),
       sender: 'ai',
-      text: `Xin chào! Tôi là AI Interviewer. Hôm nay chúng ta sẽ tiến hành phỏng vấn cho vị trí ${position}. Trước tiên, bạn có thể giới thiệu ngắn gọn về bản thân và kinh nghiệm làm việc của mình không?`,
+      text: `Xin chào! Tôi là AI Interviewer. Hôm nay chúng ta sẽ tiến hành phỏng vấn cho vị trí ${position} (${level}). Trước tiên, bạn có thể giới thiệu ngắn gọn về bản thân và kinh nghiệm làm việc của mình không?`,
       timestamp: new Date().toISOString()
     };
     setConversation([initialMessage]);
@@ -136,52 +185,58 @@ const LiveInterview = () => {
   const handleSendMessage = async () => {
     if (!message.trim()) return;
 
-    const userMessage = {
-      id: Date.now(),
-      sender: 'user',
-      text: message,
-      timestamp: new Date().toISOString()
-    };
-    
-    setConversation(prev => [...prev, userMessage]);
+    const userMessage = createMessage('user', message);
+    addMessageToConversation(setConversation, userMessage, speakAiResponse, isSpeechEnabled, isSpeakerOn);
     setMessage('');
     setIsAiThinking(true);
-    
+
     try {
-      const history = conversation.filter(msg => !msg.isTyping && !msg.isError);
-      const options = {
-        position: position,
-        skills: getSkillsForPosition(position)
-      };
-      
-      const response = await getAIResponse(message, history, options);
-      
-      const aiResponse = {
-        id: Date.now() + 1,
-        sender: 'ai',
-        text: response,
-        timestamp: new Date().toISOString()
-      };
-      
-      setConversation(prev => [...prev, aiResponse]);
-      
-      if (isSpeechEnabled && isSpeakerOn) {
-        speakAiResponse(response);
+      console.log(`--- START handleSendMessage --- Current Phase: ${interviewState.phase}`);
+      console.log("User Message:", message);
+
+      switch (interviewState.phase) {
+        case 'introduction':
+          setIsAnalyzing(true);
+          await handleIntroductionPhase(
+            message,
+            setConversation,
+            setInterviewState,
+            speakAiResponse,
+            isSpeechEnabled,
+            isSpeakerOn,
+            position
+          );
+          break;
+
+        case 'interviewing':
+          await handleInterviewingPhase(
+            message,
+            interviewState,
+            setInterviewState,
+            setConversation,
+            setInterviewing,
+            speakAiResponse,
+            isSpeechEnabled,
+            isSpeakerOn
+          );
+          break;
+
+        case 'completed':
+          console.log("Phase: completed. Ignoring message.");
+          break;
       }
     } catch (error) {
-      console.error('Error communicating with AI:', error);
-      setConversation(prev => [
-        ...prev, 
-        {
-          id: Date.now() + 1,
-          sender: 'ai',
-          text: 'Xin lỗi, đã có lỗi xảy ra. Vui lòng thử lại.',
-          timestamp: new Date().toISOString(),
-          isError: true
-        }
-      ]);
+      console.error('--- Error in handleSendMessage ---', error);
+      const errorMessage = createMessage(
+        'ai',
+        'Xin lỗi, đã có lỗi xảy ra trong quá trình phỏng vấn. Vui lòng thử lại hoặc bắt đầu lại cuộc phỏng vấn.',
+        true
+      );
+      addMessageToConversation(setConversation, errorMessage, speakAiResponse, isSpeechEnabled, isSpeakerOn);
     } finally {
+      console.log("--- END handleSendMessage ---");
       setIsAiThinking(false);
+      setIsAnalyzing(false);
     }
   };
 
@@ -206,6 +261,208 @@ const LiveInterview = () => {
       e.preventDefault();
       handleSendMessage();
     }
+  };
+
+  // Phase handling functions
+  const handleIntroductionPhase = async (
+    message,
+    setConversation,
+    setInterviewState,
+    speakAiResponse,
+    isSpeechEnabled,
+    isSpeakerOn,
+    position
+  ) => {
+    const topics = await extractTopics(message);
+    
+    if (!topics || topics.length === 0) {
+      const skills = getSkillsForPosition(position);
+      const clarificationMessage = createMessage(
+        'ai',
+        `Cảm ơn bạn đã chia sẻ. Bạn có thể giới thiệu rõ ràng hơn về kinh nghiệm làm việc và các kỹ năng chính của mình không? Đối với vị trí ${position}, chúng tôi thường tìm kiếm các kỹ năng như: ${skills}.`
+      );
+      addMessageToConversation(setConversation, clarificationMessage, speakAiResponse, isSpeechEnabled, isSpeakerOn);
+      return;
+    }
+
+    const technicalKeywords = ['frontend', 'backend', 'fullstack', 'react', 'angular', 'vue', 'javascript', 'html', 'css', 'api', 'database', 'sql', 'python', 'java', 'c++', 'c#', 'devops', 'aws', 'azure', 'gcp', 'docker', 'kubernetes', 'mobile', 'ios', 'android', 'qa', 'testing', 'ui/ux', 'next.js', 'tailwind css'];
+    
+    const prioritizedTopics = topics.sort((a, b) => {
+      const aIsTechnical = technicalKeywords.some(keyword => a.toLowerCase().includes(keyword));
+      const bIsTechnical = technicalKeywords.some(keyword => b.toLowerCase().includes(keyword));
+      return bIsTechnical - aIsTechnical;
+    });
+
+    const firstTopic = prioritizedTopics[0];
+    const questions = await generateQuestionsForTopic(firstTopic);
+
+    if (!questions || questions.length === 0) {
+      const noQuestionsMessage = createMessage(
+        'ai',
+        `Xin lỗi, tôi gặp khó khăn khi tạo câu hỏi chi tiết về chủ đề ${firstTopic}. Bạn có muốn thử giới thiệu lại hoặc tập trung vào các kỹ năng khác không?`
+      );
+      addMessageToConversation(setConversation, noQuestionsMessage, speakAiResponse, isSpeechEnabled, isSpeakerOn);
+      return;
+    }
+
+    setInterviewState({
+      phase: 'interviewing',
+      topics,
+      currentTopicIndex: 0,
+      questions,
+      currentQuestionIndex: 0
+    });
+
+    const firstQuestion = createMessage('ai', questions[0]);
+    addMessageToConversation(setConversation, firstQuestion, speakAiResponse, isSpeechEnabled, isSpeakerOn);
+  };
+
+  const handleInterviewingPhase = async (
+    message,
+    interviewState,
+    setInterviewState,
+    setConversation,
+    setInterviewing,
+    speakAiResponse,
+    isSpeechEnabled,
+    isSpeakerOn
+  ) => {
+    const currentQuestion = interviewState.questions[interviewState.currentQuestionIndex];
+    
+    if (!currentQuestion) {
+      const errorMessage = createMessage(
+        'ai',
+        'Xin lỗi, có lỗi xảy ra khi xử lý câu hỏi hiện tại. Chúng ta hãy thử chuyển sang chủ đề khác nhé.',
+        true
+      );
+      addMessageToConversation(setConversation, errorMessage, speakAiResponse, isSpeechEnabled, isSpeakerOn);
+      await handleTopicTransition(interviewState, setInterviewState, setConversation, setInterviewing, speakAiResponse, isSpeechEnabled, isSpeakerOn);
+      return;
+    }
+
+    const evaluation = await evaluateAnswer(currentQuestion, message);
+    
+    if (!evaluation || typeof evaluation.isComplete === 'undefined') {
+      const errorMessage = createMessage(
+        'ai',
+        'Xin lỗi, có lỗi xảy ra khi đánh giá câu trả lời của bạn. Chúng ta hãy thử chuyển sang câu hỏi tiếp theo nhé.',
+        true
+      );
+      addMessageToConversation(setConversation, errorMessage, speakAiResponse, isSpeechEnabled, isSpeakerOn);
+      await handleQuestionTransition(interviewState, setInterviewState, setConversation, setInterviewing, speakAiResponse, isSpeechEnabled, isSpeakerOn);
+      return;
+    }
+
+    if (!evaluation.isComplete) {
+      const followUpQuestion = createMessage(
+        'ai',
+        evaluation.feedback?.trim() || 
+        (evaluation.missingPoints?.length > 0 
+          ? `Cảm ơn câu trả lời của bạn. Bạn có thể bổ sung thêm về: ${evaluation.missingPoints.join(', ')}`
+          : 'Cảm ơn câu trả lời của bạn. Bạn có muốn nói thêm về điểm này không?')
+      );
+      addMessageToConversation(setConversation, followUpQuestion, speakAiResponse, isSpeechEnabled, isSpeakerOn);
+      return;
+    }
+
+    await handleQuestionTransition(interviewState, setInterviewState, setConversation, setInterviewing, speakAiResponse, isSpeechEnabled, isSpeakerOn);
+  };
+
+  const handleQuestionTransition = async (
+    interviewState,
+    setInterviewState,
+    setConversation,
+    setInterviewing,
+    speakAiResponse,
+    isSpeechEnabled,
+    isSpeakerOn
+  ) => {
+    const nextQuestionIndex = interviewState.currentQuestionIndex + 1;
+    
+    if (nextQuestionIndex < interviewState.questions.length) {
+      setInterviewState(prev => ({
+        ...prev,
+        currentQuestionIndex: nextQuestionIndex
+      }));
+      
+      const nextQuestion = createMessage('ai', interviewState.questions[nextQuestionIndex]);
+      addMessageToConversation(setConversation, nextQuestion, speakAiResponse, isSpeechEnabled, isSpeakerOn);
+      return;
+    }
+
+    await handleTopicTransition(interviewState, setInterviewState, setConversation, setInterviewing, speakAiResponse, isSpeechEnabled, isSpeakerOn);
+  };
+
+  const handleTopicTransition = async (
+    interviewState,
+    setInterviewState,
+    setConversation,
+    setInterviewing,
+    speakAiResponse,
+    isSpeechEnabled,
+    isSpeakerOn
+  ) => {
+    const nextTopicIndex = interviewState.currentTopicIndex + 1;
+    
+    if (nextTopicIndex < interviewState.topics.length) {
+      const nextTopic = interviewState.topics[nextTopicIndex];
+      const nextTopicQuestions = await generateQuestionsForTopic(nextTopic);
+      
+      if (!nextTopicQuestions || nextTopicQuestions.length === 0) {
+        const noQuestionsMessage = createMessage(
+          'ai',
+          `Xin lỗi, tôi gặp khó khăn khi tạo câu hỏi chi tiết về chủ đề ${nextTopic}. Chúng ta có thể chuyển sang chủ đề khác hoặc kết thúc phỏng vấn.`
+        );
+        addMessageToConversation(setConversation, noQuestionsMessage, speakAiResponse, isSpeechEnabled, isSpeakerOn);
+        
+        const nextNextTopicIndex = nextTopicIndex + 1;
+        if (nextNextTopicIndex < interviewState.topics.length) {
+          setInterviewState(prev => ({
+            ...prev,
+            currentTopicIndex: nextNextTopicIndex,
+            questions: [],
+            currentQuestionIndex: 0
+          }));
+        } else {
+          await endInterview(setInterviewState, setInterviewing, setConversation, speakAiResponse, isSpeechEnabled, isSpeakerOn);
+        }
+        return;
+      }
+
+      setInterviewState(prev => ({
+        ...prev,
+        currentTopicIndex: nextTopicIndex,
+        questions: nextTopicQuestions,
+        currentQuestionIndex: 0
+      }));
+
+      const nextQuestion = createMessage('ai', nextTopicQuestions[0]);
+      addMessageToConversation(setConversation, nextQuestion, speakAiResponse, isSpeechEnabled, isSpeakerOn);
+      return;
+    }
+
+    await endInterview(setInterviewState, setInterviewing, setConversation, speakAiResponse, isSpeechEnabled, isSpeakerOn);
+  };
+
+  const endInterview = async (
+    setInterviewState,
+    setInterviewing,
+    setConversation,
+    speakAiResponse,
+    isSpeechEnabled,
+    isSpeakerOn
+  ) => {
+    setInterviewState(prev => ({
+      ...prev,
+      phase: 'completed'
+    }));
+    
+    const endingMessage = createMessage(
+      'ai',
+      'Cảm ơn bạn đã tham gia buổi phỏng vấn. Chúng tôi sẽ liên hệ với bạn trong thời gian sớm nhất.'
+    );
+    addMessageToConversation(setConversation, endingMessage, speakAiResponse, isSpeechEnabled, isSpeakerOn);
+    setInterviewing(false);
   };
 
   if (loading) {
@@ -233,12 +490,20 @@ const LiveInterview = () => {
             onSpeechToggle={() => setIsSpeechEnabled(prev => !prev)}
             onStartInterview={startInterview}
             positionOptions={positionOptions}
+            level={level}
+            setLevel={setLevel}
+            levelOptions={levelOptions}
+            language={language}
+            setLanguage={setLanguage}
+            LANGUAGES={LANGUAGES}
           />
         ) : (
           <InterviewChat 
             position={position}
+            level={level}
             isSpeechEnabled={isSpeechEnabled}
             voiceLanguage={voiceLanguage}
+            language={language}
             isListening={isListening}
             isSpeakerOn={isSpeakerOn}
             isAiSpeaking={isAiSpeaking}

@@ -9,6 +9,9 @@ const PreInterviewSetup = ({
   onSpeechToggle, 
   onStartInterview,
   positionOptions,
+  level,
+  setLevel,
+  levelOptions,
   language,
   setLanguage,
   LANGUAGES 
@@ -20,7 +23,7 @@ const PreInterviewSetup = ({
       </Typography>
       <Typography paragraph>
         Bạn sẽ tham gia một buổi phỏng vấn mô phỏng với AI đóng vai trò là một nhà tuyển dụng.
-        Hãy chọn vị trí công việc và ngôn ngữ phỏng vấn để bắt đầu.
+        Hãy chọn vị trí công việc, cấp độ (level) và ngôn ngữ phỏng vấn để bắt đầu.
       </Typography>
       
       <FormControl fullWidth sx={{ mb: 3 }}>
@@ -39,13 +42,26 @@ const PreInterviewSetup = ({
       </FormControl>
 
       <FormControl fullWidth sx={{ mb: 3 }}>
+        <InputLabel>Cấp độ (Level)</InputLabel>
+        <Select
+          value={level}
+          label="Cấp độ (Level)"
+          onChange={(e) => setLevel(e.target.value)}
+        >
+          {levelOptions && levelOptions.map((lv) => (
+            <MenuItem key={lv} value={lv}>{lv}</MenuItem>
+          ))}
+        </Select>
+      </FormControl>
+
+      <FormControl fullWidth sx={{ mb: 3 }}>
         <InputLabel>Ngôn ngữ phỏng vấn</InputLabel>
         <Select
           value={language}
           label="Ngôn ngữ phỏng vấn"
           onChange={(e) => setLanguage(e.target.value)}
         >
-          {LANGUAGES.map((lang) => (
+          {LANGUAGES && LANGUAGES.map((lang) => (
             <MenuItem key={lang.key} value={lang.value}>
               {lang.label}
             </MenuItem>
