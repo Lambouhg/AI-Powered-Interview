@@ -279,7 +279,12 @@ const LiveInterview = () => {
       const skills = getSkillsForPosition(position);
       const clarificationMessage = createMessage(
         'ai',
-        `Cảm ơn bạn đã chia sẻ. Bạn có thể giới thiệu rõ ràng hơn về kinh nghiệm làm việc và các kỹ năng chính của mình không? Đối với vị trí ${position}, chúng tôi thường tìm kiếm các kỹ năng như: ${skills}.`
+        `Tôi thấy bạn chưa giới thiệu về bản thân và kinh nghiệm làm việc. Bạn có thể giới thiệu ngắn gọn về:
+        1. Tên và vị trí hiện tại của bạn
+        2. Kinh nghiệm làm việc trong lĩnh vực ${position}
+        3. Các kỹ năng chính của bạn
+        
+        Đối với vị trí ${position}, chúng tôi thường tìm kiếm các kỹ năng như: ${skills}.`
       );
       addMessageToConversation(setConversation, clarificationMessage, speakAiResponse, isSpeechEnabled, isSpeakerOn);
       return;
@@ -353,19 +358,38 @@ const LiveInterview = () => {
       return;
     }
 
-    if (!evaluation.isComplete) {
-      const followUpQuestion = createMessage(
-        'ai',
-        evaluation.feedback?.trim() || 
-        (evaluation.missingPoints?.length > 0 
-          ? `Cảm ơn câu trả lời của bạn. Bạn có thể bổ sung thêm về: ${evaluation.missingPoints.join(', ')}`
-          : 'Cảm ơn câu trả lời của bạn. Bạn có muốn nói thêm về điểm này không?')
-      );
-      addMessageToConversation(setConversation, followUpQuestion, speakAiResponse, isSpeechEnabled, isSpeakerOn);
-      return;
+    // Tạo phản hồi dựa trên đánh giá
+    let responseText = '';
+    
+    if (evaluation.score >= 8) {
+      responseText = `Rất tốt! Câu trả lời của bạn đạt ${evaluation.score}/10 điểm. ${evaluation.feedback}`;
+      if (evaluation.strengths.length > 0) {
+        responseText += `\n\nĐiểm mạnh của bạn:\n${evaluation.strengths.map(s => `- ${s}`).join('\n')}`;
+      }
+    } else if (evaluation.score >= 5) {
+      responseText = `Câu trả lời của bạn đạt ${evaluation.score}/10 điểm. ${evaluation.feedback}`;
+      if (evaluation.missingPoints.length > 0) {
+        responseText += `\n\nBạn có thể bổ sung thêm về:\n${evaluation.missingPoints.map(p => `- ${p}`).join('\n')}`;
+      }
+    } else {
+      responseText = `Câu trả lời của bạn cần cải thiện (${evaluation.score}/10 điểm). ${evaluation.feedback}`;
+      if (evaluation.suggestedImprovements.length > 0) {
+        responseText += `\n\nĐề xuất cải thiện:\n${evaluation.suggestedImprovements.map(i => `- ${i}`).join('\n')}`;
+      }
     }
 
-    await handleQuestionTransition(interviewState, setInterviewState, setConversation, setInterviewing, speakAiResponse, isSpeechEnabled, isSpeakerOn);
+    // Thêm câu hỏi tiếp theo nếu có
+    if (evaluation.followUpQuestions.length > 0) {
+      responseText += `\n\nCâu hỏi tiếp theo: ${evaluation.followUpQuestions[0]}`;
+    }
+
+    const responseMessage = createMessage('ai', responseText);
+    addMessageToConversation(setConversation, responseMessage, speakAiResponse, isSpeechEnabled, isSpeakerOn);
+
+    // Nếu câu trả lời đã đầy đủ và không có câu hỏi tiếp theo, chuyển sang câu hỏi mới
+    if (evaluation.isComplete && evaluation.followUpQuestions.length === 0) {
+      await handleQuestionTransition(interviewState, setInterviewState, setConversation, setInterviewing, speakAiResponse, isSpeechEnabled, isSpeakerOn);
+    }
   };
 
   const handleQuestionTransition = async (
